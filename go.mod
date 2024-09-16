@@ -1,0 +1,3 @@
+module INSTANT-MESSAGING
+
+go 1.23.1
