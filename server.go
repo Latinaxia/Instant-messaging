@@ -62,14 +62,15 @@ func (this *Server) Handler(conn net.Conn) {
 	fmt.Println("connection success !")
 
 	//用户上线，加入到OnlineMap
-	user := NewUser(conn)
-	this.mapLock.Lock()
-	this.OnLineMap[user.Name] = user
-	this.mapLock.Unlock()
+	user := NewUser(conn, this)
+	user.Online()
+	// this.mapLock.Lock()
+	// this.OnLineMap[user.Name] = user
+	// this.mapLock.Unlock()
 
-	// 广播用户上线消息
-	this.BroadCast(user, "已上线")
-	fmt.Println("有新用户上线了！,用户地址：", user.Addr)
+	// // 广播用户上线消息
+	// this.BroadCast(user, "已上线")
+	// fmt.Println("有新用户上线了！,用户地址：", user.Addr)
 
 	//接收客户端发送的消息
 	go func() {
@@ -79,7 +80,8 @@ func (this *Server) Handler(conn net.Conn) {
 			n, err := conn.Read(buf) //从收到的连接中读取消息
 
 			if n == 0 {
-				this.BroadCast(user, "下线")
+				// this.BroadCast(user, "下线")
+				user.Offline()
 			}
 
 			if err != nil && err != io.EOF { //io.EOF 是一个特殊的错误，表示已经到达文件或流的末尾。在网络编程中，这通常表示连接已被对方关闭，是一种正常的情况。
@@ -91,7 +93,8 @@ func (this *Server) Handler(conn net.Conn) {
 			// 检查是否包含换行符（回车的情况）
 			if len(msgBuffer) > 0 && msgBuffer[len(msgBuffer)-1] == '\n' {
 				// 去除末尾的换行符并广播
-				this.BroadCast(user, msgBuffer)
+				// this.BroadCast(user, msgBuffer)
+				user.DoMessage(msgBuffer)
 				msgBuffer = "" // 清空缓冲区
 			}
 		}
