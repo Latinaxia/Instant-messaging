@@ -60,8 +60,12 @@ func (this *User) SendMsg(msg string) {
 
 // 用户处理消息的业务
 func (this *User) DoMessage(msg string) {
-	if msg[:len(msg)-1] == "who" {
-		fmt.Println("收到请求:who") // 添加调试输出
+
+	// for i := range msg {
+	// 	fmt.Printf("index = %d, value = %c, byte value = %d\n", i, msg[i], msg[i])
+	// }
+
+	if msg == "who" {
 		//查询当前在线用户
 		this.server.mapLock.Lock()
 		for _, user := range this.server.OnLineMap {
@@ -70,8 +74,22 @@ func (this *User) DoMessage(msg string) {
 			this.SendMsg(onlineMsg)
 		}
 		this.server.mapLock.Unlock()
+	} else if len(msg) > 7 && msg[:7] == "rename|" {
+		newName := msg[7:]
+		// newName := strings.Split(msg,"|")
+		_, ok := this.server.OnLineMap[newName]
+		if ok {
+			this.SendMsg("当前用户名已被使用\n")
+		} else {
+			this.server.mapLock.Lock()
+			delete(this.server.OnLineMap, this.Name)
+			this.server.OnLineMap[newName] = this
+			this.server.mapLock.Unlock()
+
+			this.Name = newName
+			this.SendMsg("您已更新用户名:" + this.Name + "\n")
+		}
 	} else {
-		fmt.Println("收到消息", msg, "消息长度为", len(msg)) // 添加调试输出
 		this.server.BroadCast(this, msg)
 	}
 

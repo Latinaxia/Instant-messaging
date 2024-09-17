@@ -93,10 +93,14 @@ func (this *Server) Handler(conn net.Conn) {
 
 			// 检查是否包含换行符（回车的情况）
 			if len(msgBuffer) > 0 && msgBuffer[len(msgBuffer)-1] == '\n' {
-				// 去除所有换行符
-				cleanedStr := strings.ReplaceAll(msgBuffer, "\n", "")
 				// this.BroadCast(user, msgBuffer)
-				user.DoMessage(cleanedStr)
+				/*
+				   去掉字符串两端的空白字符，包括空格、制表符（tab）、换行符（\n）、回车符（\r）等。
+				   接受的msg末尾有"\r"回车符
+				   通常是在Windows系统的控制台输入中按下回车键（Enter）后会产生的结果。
+				   在这种情况下，msg后面是 \r 而不是 \n，所以导致字符串的输出中出现额外的字符。
+				*/
+				user.DoMessage(strings.TrimSpace(msgBuffer))
 				msgBuffer = "" // 清空缓冲区
 			}
 		}
