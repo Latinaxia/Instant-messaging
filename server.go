@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"sync"
 )
 
@@ -92,9 +93,10 @@ func (this *Server) Handler(conn net.Conn) {
 
 			// 检查是否包含换行符（回车的情况）
 			if len(msgBuffer) > 0 && msgBuffer[len(msgBuffer)-1] == '\n' {
-				// 去除末尾的换行符并广播
+				// 去除所有换行符
+				cleanedStr := strings.ReplaceAll(msgBuffer, "\n", "")
 				// this.BroadCast(user, msgBuffer)
-				user.DoMessage(msgBuffer)
+				user.DoMessage(cleanedStr)
 				msgBuffer = "" // 清空缓冲区
 			}
 		}

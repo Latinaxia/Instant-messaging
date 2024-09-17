@@ -53,9 +53,28 @@ func (this *User) Offline() {
 	fmt.Println("当前用户已下线！,用户地址：", this.Addr)
 }
 
+// 给当前user对应的客户端发消息
+func (this *User) SendMsg(msg string) {
+	this.conn.Write([]byte(msg))
+}
+
 // 用户处理消息的业务
 func (this *User) DoMessage(msg string) {
-	this.server.BroadCast(this, msg)
+	if msg[:len(msg)-1] == "who" {
+		fmt.Println("收到请求:who") // 添加调试输出
+		//查询当前在线用户
+		this.server.mapLock.Lock()
+		for _, user := range this.server.OnLineMap {
+			// onlineMsg := fmt.Sprintf("%s 在线\n", user.Name)
+			onlineMsg := user.Name + "在线\n"
+			this.SendMsg(onlineMsg)
+		}
+		this.server.mapLock.Unlock()
+	} else {
+		fmt.Println("收到消息", msg, "消息长度为", len(msg)) // 添加调试输出
+		this.server.BroadCast(this, msg)
+	}
+
 }
 
 // 监听user channel,有消息就发送给对应客户端
