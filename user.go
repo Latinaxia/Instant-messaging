@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 type User struct {
@@ -97,6 +98,22 @@ func (this *User) DoMessage(msg string) {
 			this.Name = newName
 			this.SendMsg("您已更新用户名:" + this.Name + "\n")
 		}
+	} else if len(msg) > 4 && msg[:3] == "to|" {
+		// 获取用户名
+		toName := strings.Split(msg, "|")[1]
+		if toName == "" {
+			this.SendMsg("消息格式不正确\n")
+			return
+		}
+		//获取user对象
+		toUser, ok := this.server.OnLineMap[toName]
+		if !ok {
+			this.SendMsg("该用户不存在！\n")
+			return
+		}
+
+		//发送消息
+		toUser.SendMsg(strings.Split(msg, "|")[2])
 	} else {
 		this.server.BroadCast(this, msg)
 	}

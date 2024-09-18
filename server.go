@@ -124,7 +124,7 @@ func (this *Server) Handler(conn net.Conn) {
 		select {
 		case <-isLive:
 			//当前用户活跃，重置定时器
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 300):
 			//已经超时，将当前user强制关闭
 			user.SendMsg("你被踢了")
 			user.Offline()
