@@ -60,6 +60,7 @@ func (this *Server) ListenMessage() {
 	}
 }
 
+// conn传值
 func (this *Server) Handler(conn net.Conn) {
 	fmt.Println("connection success !")
 
@@ -75,11 +76,23 @@ func (this *Server) Handler(conn net.Conn) {
 		var msgBuffer string // 使用一个字符串来缓冲消息
 		buf := make([]byte, 4096)
 		for {
-			n, err := conn.Read(buf) //从收到的连接中读取消息
+			//阻塞调用，如果连接关闭后，仍然有可能会继续处理读取的逻辑，因为 Read 方法不会立即返回
+			n, err := conn.Read(buf)
+
+			if err != nil {
+				if err == io.EOF {
+					// 连接正常关闭，处理下线
+					user.Offline()
+					return // 直接返回退出goroutine
+				}
+				fmt.Println("Conn Read err: ", err)
+				return // 遇到其他错误也退出goroutine
+			}
 
 			if n == 0 {
-				// this.BroadCast(user, "下线")
+				// 处理空读取，通常表示连接关闭
 				user.Offline()
+				return
 			}
 
 			if err != nil && err != io.EOF { //io.EOF 是一个特殊的错误，表示已经到达文件或流的末尾。在网络编程中，这通常表示连接已被对方关闭，是一种正常的情况。
@@ -114,8 +127,9 @@ func (this *Server) Handler(conn net.Conn) {
 		case <-time.After(time.Second * 10):
 			//已经超时，将当前user强制关闭
 			user.SendMsg("你被踢了")
-			close(user.C)
-			conn.Close()
+			user.Offline()
+			// close(user.C)
+			// conn.Close()
 			return
 		}
 	}

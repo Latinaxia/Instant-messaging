@@ -51,7 +51,14 @@ func (this *User) Offline() {
 	// 广播用户上线消息
 	this.server.BroadCast(this, "已下线")
 	fmt.Println("当前用户已下线！,用户地址：", this.Addr)
-	// close(this.C)
+
+	// 检查`this.C`是否已经关闭，避免重复关闭
+	if this.C != nil {
+		close(this.C)
+		this.C = nil
+	}
+
+	this.conn.Close()
 }
 
 // 给当前user对应的客户端发消息
@@ -107,5 +114,4 @@ func (this *User) ListenMessage() {
 		//发送给客户端
 		this.conn.Write([]byte(msg + "\n"))
 	}
-	// this.conn.Close()
 }
