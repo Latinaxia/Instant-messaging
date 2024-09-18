@@ -51,6 +51,7 @@ func (this *User) Offline() {
 	// 广播用户上线消息
 	this.server.BroadCast(this, "已下线")
 	fmt.Println("当前用户已下线！,用户地址：", this.Addr)
+	// close(this.C)
 }
 
 // 给当前user对应的客户端发消息
@@ -99,8 +100,12 @@ func (this *User) DoMessage(msg string) {
 func (this *User) ListenMessage() {
 	for {
 		//拿出channel中的消息
-		msg := <-this.C
+		msg, ok := <-this.C
+		if !ok {
+			break
+		}
 		//发送给客户端
 		this.conn.Write([]byte(msg + "\n"))
 	}
+	// this.conn.Close()
 }

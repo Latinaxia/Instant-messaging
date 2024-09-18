@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 )
 
 type Server struct {
@@ -65,13 +66,9 @@ func (this *Server) Handler(conn net.Conn) {
 	//用户上线，加入到OnlineMap
 	user := NewUser(conn, this)
 	user.Online()
-	// this.mapLock.Lock()
-	// this.OnLineMap[user.Name] = user
-	// this.mapLock.Unlock()
 
-	// // 广播用户上线消息
-	// this.BroadCast(user, "已上线")
-	// fmt.Println("有新用户上线了！,用户地址：", user.Addr)
+	//监听user是否活跃的channel
+	isLive := make(chan bool)
 
 	//接收客户端发送的消息
 	go func() {
@@ -102,12 +99,27 @@ func (this *Server) Handler(conn net.Conn) {
 				*/
 				user.DoMessage(strings.TrimSpace(msgBuffer))
 				msgBuffer = "" // 清空缓冲区
+
+				//用户的任意消息，代表当前用户是活跃的
+				isLive <- true
 			}
 		}
 	}()
 
 	//阻塞住,保持用户的连接
-	select {}
+	for {
+		select {
+		case <-isLive:
+			//当前用户活跃，重置定时器
+		case <-time.After(time.Second * 10):
+			//已经超时，将当前user强制关闭
+			user.SendMsg("你被踢了")
+			close(user.C)
+			conn.Close()
+			return
+		}
+	}
+
 }
 
 // 启动TCP服务
